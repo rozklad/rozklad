@@ -24,10 +24,18 @@ jobs:
           path: profile/streak.svg
           token: ${{ secrets.STREAK_STATS_TOKEN }}
 
+      - name: Fetch contribution calendar
+        env:
+          GH_TOKEN: ${{ secrets.STREAK_STATS_TOKEN }}
+        run: |
+          gh api graphql -f login=${{ github.repository_owner }} \
+            -f query='query($login:String!){user(login:$login){contributionsCollection{contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}' \
+            --jq .data.user.contributionsCollection.contributionCalendar > profile/contributions.json
+
       - name: Commit streak stats
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add profile/streak.svg
+          git add profile/streak.svg profile/contributions.json
           git commit -m "Update streak stats" || exit 0
           git push
